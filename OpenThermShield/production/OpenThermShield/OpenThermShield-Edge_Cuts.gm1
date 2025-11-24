@@ -1,0 +1,23 @@
+G04 #@! TF.GenerationSoftware,KiCad,Pcbnew,9.0.5*
+G04 #@! TF.CreationDate,2025-11-23T21:58:28+00:00*
+G04 #@! TF.ProjectId,OpenThermShield,4f70656e-5468-4657-926d-536869656c64,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Profile,NP*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+G04 Created by KiCad (PCBNEW 9.0.5) date 2025-11-23 21:58:28*
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 #@! TA.AperFunction,Profile*
+%ADD10C,0.050000*%
+G04 #@! TD*
+G04 APERTURE END LIST*
+D10*
+X86500000Y-44500000D02*
+X141500000Y-44500000D01*
+X141500000Y-163000000D01*
+X86500000Y-163000000D01*
+X86500000Y-44500000D01*
+M02*
