@@ -1,14 +1,20 @@
 esphome:
-  name: esphome-web-61c330
-  friendly_name: OpenTherm
+  name: mini
+  friendly_name: OpenTherm32
   min_version: 2025.9.0
   name_add_mac_suffix: false
 
-esp8266:
-  board: esp01_1m
+esp32:
+  board: wemos_d1_mini32
+  framework: 
+    type: esp-idf
+
 
 # Enable logging
 logger:
+  level: DEBUG
+  # logs:
+  #   opentherm: INFO
 
 # Enable Home Assistant API
 api:
@@ -24,16 +30,16 @@ wifi:
 
 # Declare the phisical pins that OpenTherm adapter is connected to
 opentherm:
-  in_pin: 5
-  out_pin: 4
+  in_pin: GPIO22
+  out_pin: GPIO21
 
 # Outputs are controlled by some other components, not manually
 output:
   - platform: opentherm
     t_set:
       id: ch_setpoint
-      auto_max_value: true
-      min_value: 20
+      max_value: 60
+      min_value: 37
       zero_means_zero: true
 
 # Values that can be set maually from HA interface
@@ -42,8 +48,8 @@ number:
     t_dhw_set:
       id: dhw_setpoint
       name: "Hot Water target temperature"
-      auto_max_value: true
-      auto_min_value: true
+      max_value: 60
+      min_value: 37
       restore_value: true
       initial_value: 45
 
@@ -72,9 +78,17 @@ sensor:
   - platform: homeassistant
     id: room_temp
     entity_id: sensor.bte_0005_temperature
+    accuracy_decimals: 2
     filters:
       # Push room temperature every second to update PID parameters
       - heartbeat: 1s
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1
+  
+  - platform: pid
+    name: "PID Climate Heat Output (Boiler CH setpoint)"
+    type: HEAT
 
 # Boiler binary (True/False) sensors
 binary_sensor:
@@ -98,6 +112,29 @@ binary_sensor:
       entity_category: diagnostic
 
 # PID control
+#[00:40:26.098][I][pid.autotune:141]: central_heating: PID Autotune:
+#[00:40:26.119][I][pid.autotune:142]:   State: Succeeded!
+#[00:40:26.119][W][pid.autotune:150]:   Oscillation Frequency is not symmetrical. PID parameters may be inaccurate!
+#[00:40:26.120][W][pid.autotune:151]:     This is usually because the heat and cool processes do not change the temperature at the same rate.
+#[00:40:26.128][W][pid.autotune:154]:     Please try reducing the positive_output value (or increase negative_output in case of a cooler)
+#[00:40:26.141][I][pid.autotune:163]:   Calculated PID parameters ("Ziegler-Nichols PID" rule):
+#[00:40:26.150][I][pid.autotune:164]:  
+#[00:40:26.162][I][pid.autotune:165]:   control_parameters:
+#[00:40:26.162][I][pid.autotune:166]:     kp: 1.04650
+#[00:40:26.162][I][pid.autotune:167]:     ki: 0.00045
+#[00:40:26.171][I][pid.autotune:168]:     kd: 613.91266
+#[00:40:26.171][I][pid.autotune:169]:  
+#[00:40:26.179][I][pid.autotune:170]:   Please copy these values into your YAML configuration! They will reset on the next reboot.
+#[00:40:26.191][D][pid.autotune:176]:   Alternative Rules:
+#[00:40:26.191][D][pid.autotune:208]:     Rule 'Ziegler-Nichols PI':
+#[00:40:26.201][D][pid.autotune:209]:       kp: 0.78487, ki: 0.00020, kd: 0.00000
+#[00:40:26.201][D][pid.autotune:208]:     Rule 'Pessen Integral PID':
+#[00:40:26.212][D][pid.autotune:209]:       kp: 1.22092, ki: 0.00065, kd: 859.47766
+#[00:40:26.223][D][pid.autotune:208]:     Rule 'Some Overshoot PID':
+#[00:40:26.223][D][pid.autotune:209]:       kp: 0.58081, ki: 0.00025, kd: 908.59070
+#[00:40:26.223][D][pid.autotune:208]:     Rule 'No Overshoot PID':
+#[00:40:26.230][D][pid.autotune:209]:       kp: 0.34883, ki: 0.00015, kd: 511.59387
+#[00:40:26.240][I][pid.autotune:182]: central_heating: Autotune completed
 climate:
   - platform: pid
     id: boiler_pid
@@ -110,8 +147,10 @@ climate:
       max_temperature: 30
       temperature_step:
         target_temperature: 0.5
-        current_temperature: 0.1
+        current_temperature: 0.01
     control_parameters: 
-      kp: 0.5
-      ki: 0.001
-      kd: 0
+      kp: 0.78487
+      ki: 0.00020
+      kd: 0.0
+      output_averaging_samples: 40 # smooth the output over 40 samples
+
